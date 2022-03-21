@@ -108,6 +108,3 @@ class GameGrid:
                   self.game_over = True
       # return the game_over flag
       return self.game_over
-grid = GameGrid(5,5)
-grid.display()
-grid.draw_grid()

@@ -96,15 +96,3 @@ BOOK_RED   = Color(150,  35,  31)
 
 #-----------------------------------------------------------------------
 
-def _main():
-    """
-    For testing:
-    """
-    c1 = Color(0, 128, 255)
-    print(c1)
-    print(c1.getRed())
-    print(c1.getGreen())
-    print(c1.getBlue())
-
-if __name__ == '__main__':
-    _main()
