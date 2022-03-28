@@ -104,7 +104,7 @@ class GameGrid:
                if self.is_inside(pos.y, pos.x):
                   self.tile_matrix[pos.y][pos.x] = tiles_to_place[row][col]
                # the game is over if any placed tile is out of the game grid
-               else:
+               else: 
                   self.game_over = True
       # return the game_over flag
       return self.game_over

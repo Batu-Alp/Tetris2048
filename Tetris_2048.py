@@ -1,3 +1,4 @@
+import time
 import stddraw # the stddraw module is used as a basic graphics library
 import random # used for creating tetrominoes with random types/shapes
 from game_grid import GameGrid # class for modeling the game grid
@@ -31,6 +32,7 @@ def start():
    
    # main game loop (keyboard interaction for moving the tetromino) 
    while True:
+      
       # check user interactions via the keyboard
       if stddraw.hasNextKeyTyped():
          key_typed = stddraw.nextKeyTyped()
@@ -48,9 +50,20 @@ def start():
             # (causes the tetromino to fall down faster)
             current_tetromino.move(key_typed, grid)
          
+         # rotate shape anticlockwise
          elif key_typed == "a":
-            current_tetromino.move("left", grid)
+            current_tetromino.get_tetromino_points(current_tetromino)
+            print("\n\n")
          # clear the queue that stores all the keys pressed/typed
+
+         # rotate shape clockwise
+         elif key_typed == "d":
+            current_tetromino.get_tetromino_points(current_tetromino)
+            print("\n\n")
+
+         elif key_typed == "b":
+            time.sleep(5)
+
          stddraw.clearKeysTyped()
             
       # move (drop) the tetromino down by 1 at each iteration 
