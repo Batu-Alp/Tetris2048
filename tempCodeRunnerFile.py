@@ -1,0 +1,1 @@
+grid.clearFullLine(grid_h, grid_w, grid)
