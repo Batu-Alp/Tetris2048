@@ -1,3 +1,4 @@
+
 import time
 import stddraw # the stddraw module is used as a basic graphics library
 import random # used for creating tetrominoes with random types/shapes
@@ -10,141 +11,195 @@ from color import Color # used for coloring the game menu
 # MAIN FUNCTION OF THE PROGRAM
 #-------------------------------------------------------------------------------
 # Main function where this program starts execution
-def start():
-   # set the dimensions of the game grid
-   grid_h, grid_w = 20, 12
-   # set the size of the drawing canvas
-   canvas_h, canvas_w = 40 * grid_h, 40 * grid_w
-   stddraw.setCanvasSize(canvas_w, canvas_h) 
-   # set the scale of the coordinate system
-   stddraw.setXscale(-0.5, grid_w - 0.5)
-   stddraw.setYscale(-0.5, grid_h - 0.5)
-   
-   # create the game grid
-   grid = GameGrid(grid_h, grid_w)
-   # create the first tetromino to enter the game grid 
-   # by using the create_tetromino function defined below
-   current_tetromino = create_tetromino(grid_h, grid_w)
-   grid.current_tetromino = current_tetromino
 
-   # display a simple menu before opening the game
-   display_game_menu(grid_h, grid_w)
-   
-   # main game loop (keyboard interaction for moving the tetromino) 
-   while True:
+class Main():
+
+   def start(self):
       
-      # check user interactions via the keyboard
-      if stddraw.hasNextKeyTyped():
-         key_typed = stddraw.nextKeyTyped()
-         # if the left arrow key has been pressed
-         if key_typed == "left": 
-            # move the tetromino left by one
-            current_tetromino.move(key_typed, grid) 
-         # if the right arrow key has been pressed
-         elif key_typed == "right":
-            # move the tetromino right by one
-            current_tetromino.move(key_typed, grid)
-         # if the down arrow key has been pressed
-         elif key_typed == "down":
-            # move the tetromino down by one 
-            # (causes the tetromino to fall down faster)
-            current_tetromino.move(key_typed, grid)
+      # set the dimensions of the game grid
+      
+      grid_h, grid_w = 20, 20
+      game_w = 12
+      # set the size of the drawing canvas
+      canvas_h, canvas_w = 40 * grid_h, 40 * grid_w
+      stddraw.setCanvasSize(canvas_w, canvas_h) 
+      # set the scale of the coordinate system
+      stddraw.setXscale(-0.5, grid_w - 0.5)
+      stddraw.setYscale(-0.5, grid_h - 0.5)
+      
+      self.tetrominos = list()
+      self.tetrominos_copy = list()
+      self.round_count = 0
+      self.create_tetromino(grid_h, game_w)
+      
+
+      self.next_tetromino = self.tetrominos[self.round_count + 1]
+      self.next_tetromino_copy = self.tetrominos[self.round_count + 1]
+      
+      self.next_tetromino_copy.move_pos(15, 10)
+      
+      
+      
+      # create the game grid
+      grid = GameGrid(grid_h, game_w)
+      # create the first tetromino to enter the game grid 
+      # by using the create_tetromino function defined below
+      grid.next_tetromino = self.next_tetromino
+      current_tetromino = self.tetrominos[self.round_count]
+     # Gives first tetromino to GameGrid class to draw it on the screen
+      grid.current_tetromino = current_tetromino
+
+      # display a simple menu before opening the game
+
+      # self.display_game_menu(grid_h, grid_w)
+
+      # main game loop (keyboard interaction for moving the tetromino) 
+      while True:
          
-         # rotate shape anticlockwise
-         elif key_typed == "a":
-            current_tetromino.get_tetromino_points(current_tetromino)
-            print("\n\n")
-         # clear the queue that stores all the keys pressed/typed
-
-         # rotate shape clockwise
-         elif key_typed == "d":
-            current_tetromino.get_tetromino_points(current_tetromino)
-            print("\n\n")
-
-         elif key_typed == "b":
-            time.sleep(5)
-
-         stddraw.clearKeysTyped()
+         # check user interactions via the keyboard
+         if stddraw.hasNextKeyTyped():
+            key_typed = stddraw.nextKeyTyped()
+            # if the left arrow key has been pressed
+            if key_typed == "left": 
+               # move the tetromino left by one
+               current_tetromino.move(key_typed, grid) 
+            # if the right arrow key has been pressed
+            elif key_typed == "right":
+               # move the tetromino right by one
+               current_tetromino.move(key_typed, grid)
+            # if the down arrow key has been pressed
+            elif key_typed == "down":
+               # move the tetromino down by one 
+               # (causes the tetromino to fall down faster)
+               current_tetromino.move(key_typed, grid)
             
-      # move (drop) the tetromino down by 1 at each iteration 
-      success = current_tetromino.move("down", grid)
+            # rotate shape anticlockwise
+            elif key_typed == "a":
+               if current_tetromino.shape != "O":
+                  current_tetromino.get_tetromino_points(current_tetromino)
+                  print("\n\n")
+            # clear the queue that stores all the keys pressed/typed
 
-      # place the tetromino on the game grid when it cannot go down anymore
-      if not success:
-         # get the tile matrix of the tetromino
-         tiles_to_place = current_tetromino.tile_matrix
-         # update the game grid by adding the tiles of the tetromino
-         game_over = grid.update_grid(tiles_to_place)
-         # end the main game loop if the game is over
-         if game_over:
-            break
-         # create the next tetromino to enter the game grid
-         # by using the create_tetromino function defined below
-         current_tetromino = create_tetromino(grid_h, grid_w)
-         grid.current_tetromino = current_tetromino
+            # rotate shape clockwise
+            elif key_typed == "d":
+               current_tetromino.get_tetromino_points(current_tetromino)
+               print("\n\n")
 
-      # display the game grid and as well the current tetromino      
-      grid.display()
+            elif key_typed == "b":
+               time.sleep(5)
 
-   print("Game over")
+            stddraw.clearKeysTyped()
+               
+         # move (drop) the tetromino down by 1 at each iteration 
+         success = current_tetromino.move("down", grid)
 
-# Function for creating random shaped tetrominoes to enter the game grid
-def create_tetromino(grid_height, grid_width):
-   # type (shape) of the tetromino is determined randomly
-   tetromino_types = [ 'I', 'O', 'Z', 'S', 'L', 'J', 'T' ]
-   random_index = random.randint(0, len(tetromino_types) - 1)
-   random_type = tetromino_types[random_index]
-   # create and return the tetromino
-   tetromino = Tetromino(random_type, grid_height, grid_width)
-   return tetromino
+         # place the tetromino on the game grid when it cannot go down anymore
+         if not success:
+            # get the tile matrix of the tetromino
+            tiles_to_place = current_tetromino.tile_matrix
+            # update the game grid by adding the tiles of the tetromino
+            game_over = grid.update_grid(tiles_to_place)
+            # end the main game loop if the game is over
+            if game_over:
+               break
+            # create the next tetromino to enter the game grid
+            # by using the create_tetromino function defined below
+            self.round_count += 1
 
-# Function for displaying a simple menu before starting the game
-def display_game_menu(grid_height, grid_width):
-   # colors used for the menu
-   background_color = Color(42, 69, 99)
-   button_color = Color(25, 255, 228)
-   text_color = Color(31, 160, 239)
-   # clear the background canvas to background_color
-   stddraw.clear(background_color)
-   # get the directory in which this python code file is placed
-   current_dir = os.path.dirname(os.path.realpath(__file__))
-   # path of the image file
-   img_file = current_dir + "/menu_image.png"
-   # center coordinates to display the image
-   img_center_x, img_center_y = (grid_width - 1) / 2, grid_height - 7
-   # image is represented using the Picture class
-   image_to_display = Picture(img_file)
-   # display the image
-   stddraw.picture(image_to_display, img_center_x, img_center_y)
-   # dimensions of the start game button
-   button_w, button_h = grid_width - 1.5, 2
-   # coordinates of the bottom left corner of the start game button 
-   button_blc_x, button_blc_y = img_center_x - button_w / 2, 4
-   # display the start game button as a filled rectangle
-   stddraw.setPenColor(button_color)
-   stddraw.filledRectangle(button_blc_x, button_blc_y, button_w, button_h)
-   # display the text on the start game button
-   stddraw.setFontFamily("Arial")
-   stddraw.setFontSize(25)
-   stddraw.setPenColor(text_color)
-   text_to_display = "Click Here to Start the Game"
-   stddraw.text(img_center_x, 5, text_to_display)
-   # menu interaction loop
-   while True:
-      # display the menu and wait for a short time (50 ms)
-      stddraw.show(50)
-      # check if the mouse has been left-clicked
-      if stddraw.mousePressed():
-         # get the x and y coordinates of the location at which the mouse has 
-         # most recently been left-clicked  
-         mouse_x, mouse_y = stddraw.mouseX(), stddraw.mouseY()
-         if mouse_x >= button_blc_x and mouse_x <= button_blc_x + button_w:
-            if mouse_y >= button_blc_y and mouse_y <= button_blc_y + button_h: 
-               break # break the loop to end the method and start the game
+            # Determines the current tetromino and gives it to GameGrid
+            current_tetromino = self.tetrominos[self.round_count]
+            # print("len", len(self.tetrominos))
+            grid.current_tetromino = current_tetromino
+            
+            new_x, new_y = random.randint(2, 9), 21
+            current_tetromino.move_pos(new_x, new_y)
+            
+            # Calculates a random position for following current tetromino
+            
+
+            if self.round_count == 8:
+               self.tetrominos = []
+               self.round_count = 0
+               self.create_tetromino(grid_h, game_w)
+
+            next_tetromino = self.tetrominos[self.round_count+1]
+            grid.next_tetromino = next_tetromino
+            self.next_tetromino_copy = self.tetrominos_copy[self.round_count + 1]
+            # print("next shape", grid.next_tetromino.shape)
+            # grid.next_tetromino.move_pos(15, 15)
+            self.next_tetromino_copy.move_pos(15, 10)
+            
+            
+            
+         # display the game grid and as well the current tetromino      
+      
+         grid.display()
+
+      print("Game over")
+
+   # Function for creating random shaped tetrominoes to enter the game grid
+   def create_tetromino(self, grid_height, grid_width):
+      # type (shape) of the tetromino is determined randomly
+      tetromino_types = [ 'I', 'O', 'Z', 'S', 'L', 'J', 'T' ]
+      for i in range(10):
+         random_index = random.randint(0, len(tetromino_types) - 1)
+         random_type = tetromino_types[random_index]
+         # create and return the tetromino
+         tetromino = Tetromino(random_type, grid_height, grid_width)
+         self.tetrominos.append(tetromino)
+
+      self.tetrominos_copy = self.tetrominos.copy()
+      return self.tetrominos
+
+   # Function for displaying a simple menu before starting the game
+   def display_game_menu(self, grid_height, grid_width):
+      # colors used for the menu
+      background_color = Color(42, 69, 99)
+      button_color = Color(25, 255, 228)
+      text_color = Color(31, 160, 239)
+      # clear the background canvas to background_color
+      stddraw.clear(background_color)
+      # get the directory in which this python code file is placed
+      current_dir = os.path.dirname(os.path.realpath(__file__))
+      # path of the image file
+      img_file = current_dir + "/menu_image.png"
+      # center coordinates to display the image
+      img_center_x, img_center_y = (grid_width - 1) / 2, grid_height - 7
+      # image is represented using the Picture class
+      image_to_display = Picture(img_file)
+      # display the image
+      stddraw.picture(image_to_display, img_center_x, img_center_y)
+      # dimensions of the start game button
+      button_w, button_h = grid_width - 1.5, 2
+      # coordinates of the bottom left corner of the start game button 
+      button_blc_x, button_blc_y = img_center_x - button_w / 2, 4
+      # display the start game button as a filled rectangle
+      stddraw.setPenColor(button_color)
+      stddraw.filledRectangle(button_blc_x, button_blc_y, button_w, button_h)
+      # display the text on the start game button
+      stddraw.setFontFamily("Arial")
+      stddraw.setFontSize(25)
+      stddraw.setPenColor(text_color)
+      text_to_display = "Click Here to Start the Game"
+      stddraw.text(img_center_x, 5, text_to_display)
+      # menu interaction loop
+      while True:
+         # display the menu and wait for a short time (50 ms)
+         stddraw.show(50)
+         # check if the mouse has been left-clicked
+         if stddraw.mousePressed():
+            # get the x and y coordinates of the location at which the mouse has 
+            # most recently been left-clicked  
+            mouse_x, mouse_y = stddraw.mouseX(), stddraw.mouseY()
+            if mouse_x >= button_blc_x and mouse_x <= button_blc_x + button_w:
+               if mouse_y >= button_blc_y and mouse_y <= button_blc_y + button_h: 
+                  break # break the loop to end the method and start the game
 
 
 
-# start() function is specified as the entry point (main function) from which 
-# the program starts execution
-if __name__== '__main__':
-   start()
+   # start() function is specified as the entry point (main function) from which 
+   # the program starts execution
+
+main_game = Main()
+main_game.start()
+

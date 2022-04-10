@@ -111,148 +111,57 @@ class Tetromino:
                if position.y < self.grid_height:
                   self.tile_matrix[row][col].draw() 
 
-   """
-   def rotate(self, grid):
-        # First erase_shape
-        self.erase_shape(grid)
-        rotated_shape = []
-        for x in range(len(self.shape[0])):
-            new_row = []
-            for y in range(len(self.shape)-1, -1, -1):
-                new_row.append(self.shape[y][x])
-            rotated_shape.append(new_row)
-        
-        right_side = self.x + len(rotated_shape[0])
-        if right_side < len(grid[0]):     
-            self.shape = rotated_shape
-            # Update the height and width
-            self.height = len(self.shape)
-   """
-   
-   def rotate(self, game_grid, current_tetromino):
-      pass
-      """
-      n = len(self.tile_matrix)
-      copy_matrix = np.copy(self.tile_matrix)
-      for r in range(n):
-         for c in range(n):
-               self.tile_matrix[c][n - 1 - r] = copy_matrix[r][c]
-      for r in range(n):
-         for c in range(n):
-               # Check if there is a tile at self.tile_matrix[r][c]
-               if self.tile_matrix[r][c] is not None:
-                  # Moves tiles to their new position
-                  self.tile_matrix[r][c].move(-r + c, -c + (n - r))
-                  if self.tile_matrix[r][c].get_position().x < 0:
-                     for i in range(0-self.tile_matrix[r][c].get_position().x):
-                           current_tetromino.move("right", game_grid)
-                  elif self.tile_matrix[r][c].get_position().x >= 12:
-                     for i in range(self.tile_matrix[r][c].get_position().x-11):
-                           current_tetromino.move("left", game_grid)
-         """
-      
 
-
-
-      """
-      if shape != 'O' and self.can_be_moved("left", game_grid):
-         temp_list = []
-
-         n = len(self.tile_matrix)
-         pivot = Point(self.tile_matrix[1][0])
-          
-
-         indexes = []
-
-         for row in range(n):
-            for col in range(n):
-               if self.tile_matrix[row,col] != None:
-                  temp_list.append([self.tile_matrix[row,col].position.x, self.tile_matrix[row,col].position.y])
-                  indexes.append((row,col))
-         
-         pivot = temp_list[1]
-         for i in range(len(temp_list)):
-            x = temp_list[i][1] - pivot[1]
-            y = temp_list[i][0] - pivot[0]
-
-            temp_list[i][0] = pivot[0] - x
-            temp_list[i][1] = pivot[1] + y
-         
-         count = 0
-         for ind in indexes:
-            self.tile_matrix[ind[0]][ind[1]].position.x = temp_list[count][0]
-            self.tile_matrix[ind[0]][ind[1]].position.y = temp_list[count][1]
-            count +=1
-            
-         # self.tile_matrix = np.ndarray(temp_list)
-
-         print(temp_list)
-       """  
 
    # 90 degree rotation
    def get_tetromino_points(self, current_tetromino):
-      print(current_tetromino.shape)
       n = len(self.tile_matrix)
-      # pivot = Point(self.tile_matrix[1][0])
-      temp_list = []
-         
-
-      indexes = []
-
+      
+      tile_dict = {}
       for row in range(n):
          for col in range(n):
             if self.tile_matrix[row, col] != None:
-               temp_list.append([self.tile_matrix[row, col].position.x, self.tile_matrix[row, col].position.y])
-               indexes.append((col,row))
+               tile_dict[self.tile_matrix[row, col]] = [self.tile_matrix[row,col].position.x, self.tile_matrix[row,col].position.y]
+
+   
       
-      pivot = temp_list[1]
-
+      pivot = list(tile_dict.values())[1]
+      
       rotate_left = True
-      for i in range(len(temp_list)):
-         x = temp_list[i][1] - pivot[1]
-         y = temp_list[i][0] - pivot[0]
+      for tile in (tile_dict.keys()):
+         x = tile_dict.get(tile)[1] - pivot[1]
+         y = tile_dict.get(tile)[0] - pivot[0]
 
-         temp_list[i][0] = pivot[0] - x
-         temp_list[i][1] = pivot[1] + y
+         rotated_x = pivot[0] - x  
+         rotated_y = pivot[1] + y
+         tile_dict[tile] = [rotated_x , rotated_y]
 
-         if temp_list[i][0] > self.grid_width -1:
+         if tile_dict.get(tile)[0] > self.grid_width -1:
             rotate_left = False
-            
-      # indexes = self.get_indexs()
 
+         elif tile_dict.get(tile)[0] <= -1:
+            rotate_left = False
       
       if rotate_left:
-         count = 0
-         for ind in indexes:
-            # if self.tile_matrix[ind[0]][ind[1]] == None:
-            #    self.tile_matrix[ind[0]][ind[1]] = Tile()
+         np_arr = np.rot90(self.tile_matrix, 1)
 
-            self.tile_matrix[ind[1]][ind[0]].position.x = temp_list[count][0]
-            self.tile_matrix[ind[1]][ind[0]].position.y = temp_list[count][1]
-            count +=1
-               
-         print(temp_list)
+         self.tile_matrix = np.full((n, n), None)
+         for tile in tile_dict.keys():
+            for i in range(len(np_arr)):
+               for j in range(len(np_arr[i])):
+                  if tile == np_arr[i, j]:
+                     
+                     point = Point()
+                     point.x = tile_dict.get(tile)[0]
+                     point.y = tile_dict.get(tile)[1]
+                     self.tile_matrix[i, j] = Tile(point)
 
-   def get_indexs(self):
-      ind_list = []
-      np_arr = np.rot90(self.occupied_tiles, 1)
-      for row in range(np_arr.shape[1]):
-         for col in range(np_arr.shape[0]):
-            if np_arr[col, row] != None:
-               ind_list.append((col, row))
-      return ind_list
+      
+   
 
-
-   # def can_rotate_left(self, temp_list):
-   #    n = len(temp_list)
-   #    for i in range(n):
-   #       for j in range(n):
-   #          if temp_list[i][j] != None and temp_list[i][j] > self.grid_width:
-   #             return False
-            
-   #          elif temp_list[i][j] != None and temp_list[i][j] < 0:
-   #             return False 
-   #    return True
+      
+  
+  
 
 
    # Method for moving the tetromino in a given direction by 1 on the game grid
@@ -337,11 +246,27 @@ class Tetromino:
                      return False
                   break  # end the inner for loop
       return True  # tetromino can be moved in the given direction
+   
+   def move_pos(self, dx, dy):
+      # Keeps the leftmost tile position
+      pivot_point = Point()
 
-   # def can_be_turned(self, dir, game_grid):
-   #    n = len(self.tile_matrix)
-   #    if dir == "clock":
-   #       pass
+      # Check if the leftmost object is None, looks one unit left and bottom, sets the pivot point relative them
+      if self.tile_matrix[0][0] != None:
+            pivot_point.x = self.tile_matrix[0][0].get_position().x
+            pivot_point.y = self.tile_matrix[0][0].get_position().y
+      # If the lestmost object None, looks one to the bottom tile
+      elif self.tile_matrix[0][1] != None:
+            pivot_point.x = self.tile_matrix[0][1].get_position().x
+            pivot_point.y = self.tile_matrix[0][1].get_position().y
+      # If the lestmost object None, looks one to the right tile
+      else:
+            pivot_point.x = self.tile_matrix[1][0].get_position().x
+            pivot_point.y = self.tile_matrix[1][0].get_position().y
+      
+      for m in self.tile_matrix:
+            for p in m:
+                if p != None:
+                    p.move(dx-pivot_point.x, dy-pivot_point.y)
 
-   #    elif dir == "anticlock":
-   #       pass
+

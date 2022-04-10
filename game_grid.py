@@ -14,6 +14,7 @@ class GameGrid:
       self.tile_matrix = np.full((grid_h, grid_w), None)
       # the tetromino that is currently being moved on the game grid
       self.current_tetromino = None
+      self.next_tetromino = None
       # game_over flag shows whether the game is over/completed or not
       self.game_over = False
       # set the color used for the empty grid cells
@@ -32,13 +33,24 @@ class GameGrid:
       # draw the game grid
       self.draw_grid()
       # draw the current (active) tetromino
-      if self.current_tetromino != None:
+      if self.current_tetromino != None and self.next_tetromino != None:
          self.current_tetromino.draw()
+         self.next_tetromino.draw()
+      
+      elif self.current_tetromino != None:
+         self.current_tetromino.draw()
+      
+   
+           
       # draw a box around the game grid 
       self.draw_boundaries()
       # show the resulting drawing with a pause duration = 250 ms
       stddraw.show(250)
          
+   
+   def set_next(self, next_tetromino):
+      self.next_tetromino = next_tetromino
+   
    # Method for drawing the cells and the lines of the grid
    def draw_grid(self):
       # draw each cell of the game grid
