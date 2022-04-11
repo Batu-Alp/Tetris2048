@@ -4,10 +4,10 @@ import stddraw # the stddraw module is used as a basic graphics library
 import random # used for creating tetrominoes with random types/shapes
 from game_grid import GameGrid # class for modeling the game grid
 from tetromino import Tetromino # class for modeling the tetrominoes
-from picture import Picture # used representing images to display
+from picture import Picture # used representing images to displaya
 import os # used for file and directory operations
 from color import Color # used for coloring the game menu
-
+import numpy as np
 # MAIN FUNCTION OF THE PROGRAM
 #-------------------------------------------------------------------------------
 # Main function where this program starts execution
@@ -37,6 +37,8 @@ class Main():
       self.next_tetromino_copy = self.tetrominos[self.round_count + 1]
       
       self.next_tetromino_copy.move_pos(15, 10)
+
+      self.is_tetromino_rotated = False
       
       
       
@@ -45,9 +47,9 @@ class Main():
       # create the first tetromino to enter the game grid 
       # by using the create_tetromino function defined below
       grid.next_tetromino = self.next_tetromino
-      current_tetromino = self.tetrominos[self.round_count]
+      self.current_tetromino = self.tetrominos[self.round_count]
      # Gives first tetromino to GameGrid class to draw it on the screen
-      grid.current_tetromino = current_tetromino
+      grid.current_tetromino = self.current_tetromino
 
       # display a simple menu before opening the game
 
@@ -62,28 +64,30 @@ class Main():
             # if the left arrow key has been pressed
             if key_typed == "left": 
                # move the tetromino left by one
-               current_tetromino.move(key_typed, grid) 
+               self.current_tetromino.move(key_typed, grid) 
             # if the right arrow key has been pressed
             elif key_typed == "right":
                # move the tetromino right by one
-               current_tetromino.move(key_typed, grid)
+               self.current_tetromino.move(key_typed, grid)
             # if the down arrow key has been pressed
             elif key_typed == "down":
                # move the tetromino down by one 
                # (causes the tetromino to fall down faster)
-               current_tetromino.move(key_typed, grid)
+               self.current_tetromino.move(key_typed, grid)
             
             # rotate shape anticlockwise
             elif key_typed == "a":
-               if current_tetromino.shape != "O":
-                  current_tetromino.get_tetromino_points(current_tetromino)
-                  print("\n\n")
+               if self.current_tetromino.shape != "O":
+                  self.is_tetromino_rotated = True
+                  self.current_tetromino.get_tetromino_points(self.current_tetromino)
+             
             # clear the queue that stores all the keys pressed/typed
 
             # rotate shape clockwise
             elif key_typed == "d":
-               current_tetromino.get_tetromino_points(current_tetromino)
-               print("\n\n")
+               self.is_tetromino_rotated = True
+               self.current_tetromino.get_tetromino_points(self.current_tetromino)
+        
 
             elif key_typed == "b":
                time.sleep(5)
@@ -91,12 +95,13 @@ class Main():
             stddraw.clearKeysTyped()
                
          # move (drop) the tetromino down by 1 at each iteration 
-         success = current_tetromino.move("down", grid)
+         success = self.current_tetromino.move("down", grid)
 
          # place the tetromino on the game grid when it cannot go down anymore
          if not success:
             # get the tile matrix of the tetromino
-            tiles_to_place = current_tetromino.tile_matrix
+            tiles_to_place = self.current_tetromino.tile_matrix
+
             # update the game grid by adding the tiles of the tetromino
             game_over = grid.update_grid(tiles_to_place)
             # end the main game loop if the game is over
@@ -107,15 +112,22 @@ class Main():
             self.round_count += 1
 
             # Determines the current tetromino and gives it to GameGrid
-            current_tetromino = self.tetrominos[self.round_count]
+            self.current_tetromino = self.tetrominos[self.round_count]
             # print("len", len(self.tetrominos))
-            grid.current_tetromino = current_tetromino
+            grid.current_tetromino = self.current_tetromino
             
             new_x, new_y = random.randint(2, 9), 21
-            current_tetromino.move_pos(new_x, new_y)
+            self.current_tetromino.move_pos(new_x, new_y)
             
             # Calculates a random position for following current tetromino
-            
+            row_count = self.is_full(grid_h, grid_w, grid)
+            index = 0
+            # Slides down the rows
+            while index < grid_h:
+               while row_count[index]:
+                  self.slide_down(row_count, grid)
+                  row_count = self.is_full(grid_h, grid_w, grid)
+               index += 1
 
             if self.round_count == 8:
                self.tetrominos = []
@@ -140,7 +152,7 @@ class Main():
    # Function for creating random shaped tetrominoes to enter the game grid
    def create_tetromino(self, grid_height, grid_width):
       # type (shape) of the tetromino is determined randomly
-      tetromino_types = [ 'I', 'O', 'Z', 'S', 'L', 'J', 'T' ]
+      tetromino_types = ['I', 'O', 'Z', 'S', 'L', 'J', 'T']
       for i in range(10):
          random_index = random.randint(0, len(tetromino_types) - 1)
          random_type = tetromino_types[random_index]
@@ -195,8 +207,39 @@ class Main():
                if mouse_y >= button_blc_y and mouse_y <= button_blc_y + button_h: 
                   break # break the loop to end the method and start the game
 
+   def slide_down(self, row_count, grid):
+         for index, i in enumerate(row_count):
+               if i:
+                  for a in range(index, 19):
+                     row = np.copy(grid.tile_matrix[a + 1])
+                     grid.tile_matrix[a] = row
+                     for b in range(12):
+                           if grid.tile_matrix[a][b] is not None:
+                              grid.tile_matrix[a][b].move(0, -1)
+                  break
 
-
+   def is_full(self, grid_h, grid_w, grid):
+      # Creates an array with full of False, array size is equal to number of rows in the game grid
+      row_count = [False for i in range(grid_h)]
+      # if a row is full, this score variable keeps total score which will come from this full row
+      score = 0
+      for h in range(grid_h):
+         # Keeps total number of tiles inside the same row, if counter == 12, row is full
+         counter = 0
+         for w in range(grid_w):
+               if grid.is_occupied(h, w):
+                  counter += 1
+               # If row is full, calculates total score in this row
+               if counter == 12:
+                  score = 0
+                  for a in range(12):
+                     score += grid.tile_matrix[h][a].number
+                  row_count[h] = True
+        # Updating total score
+      grid.score += score
+        # Used for changing game speed by score
+      grid.last_updated += score
+      return row_count
    # start() function is specified as the entry point (main function) from which 
    # the program starts execution
 

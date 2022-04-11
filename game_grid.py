@@ -25,6 +25,8 @@ class GameGrid:
       # thickness values used for the grid lines and the grid boundaries 
       self.line_thickness = 0.002
       self.box_thickness = 8 * self.line_thickness
+      self.score = 0
+      self.last_updated = 0
 
    # Method used for displaying the game grid
    def display(self):
