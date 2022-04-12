@@ -29,7 +29,7 @@ class GameGrid:
       self.last_updated = 0
 
    # Method used for displaying the game grid
-   def display(self):
+   def display(self, point=150):
       # clear the background canvas to empty_cell_color
       stddraw.clear(self.empty_cell_color)
       # draw the game grid
@@ -41,7 +41,17 @@ class GameGrid:
       
       elif self.current_tetromino != None:
          self.current_tetromino.draw()
-      
+
+      text_color = Color(31, 160, 239)
+      stddraw.setFontFamily("Arial")
+      stddraw.setFontSize(25)
+      stddraw.setPenColor(text_color)
+      text_to_display = "Next Tetromino"
+      stddraw.text(15, 12, text_to_display)
+
+      text_to_point = str(point)
+      stddraw.text(15,18, "POINT")
+      stddraw.text(15, 17, text_to_point)
    
            
       # draw a box around the game grid 

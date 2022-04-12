@@ -1,5 +1,7 @@
 
 import time
+
+from matplotlib.pyplot import grid
 import stddraw # the stddraw module is used as a basic graphics library
 import random # used for creating tetrominoes with random types/shapes
 from game_grid import GameGrid # class for modeling the game grid
@@ -8,6 +10,7 @@ from picture import Picture # used representing images to displaya
 import os # used for file and directory operations
 from color import Color # used for coloring the game menu
 import numpy as np
+
 # MAIN FUNCTION OF THE PROGRAM
 #-------------------------------------------------------------------------------
 # Main function where this program starts execution
@@ -15,9 +18,7 @@ import numpy as np
 class Main():
 
    def start(self):
-      
-      # set the dimensions of the game grid
-      
+      # set the dimensions of the game grid      
       grid_h, grid_w = 20, 20
       game_w = 12
       # set the size of the drawing canvas
@@ -31,16 +32,11 @@ class Main():
       self.tetrominos_copy = list()
       self.round_count = 0
       self.create_tetromino(grid_h, game_w)
-      
 
       self.next_tetromino = self.tetrominos[self.round_count + 1]
       self.next_tetromino_copy = self.tetrominos[self.round_count + 1]
       
       self.next_tetromino_copy.move_pos(15, 10)
-
-      self.is_tetromino_rotated = False
-      
-      
       
       # create the game grid
       grid = GameGrid(grid_h, game_w)
@@ -79,21 +75,21 @@ class Main():
             elif key_typed == "a":
                if self.current_tetromino.shape != "O":
                   self.is_tetromino_rotated = True
-                  self.current_tetromino.get_tetromino_points(self.current_tetromino)
+                  self.current_tetromino.rotate(self.current_tetromino)
              
             # clear the queue that stores all the keys pressed/typed
 
             # rotate shape clockwise
             elif key_typed == "d":
                self.is_tetromino_rotated = True
-               self.current_tetromino.get_tetromino_points(self.current_tetromino)
-        
+               self.current_tetromino.rotate(self.current_tetromino)
 
-            elif key_typed == "b":
-               time.sleep(5)
+            elif key_typed == "space":
+               self.current_tetromino.down_tetromino_now(self.current_tetromino, grid, grid_h)
 
             stddraw.clearKeysTyped()
-               
+
+
          # move (drop) the tetromino down by 1 at each iteration 
          success = self.current_tetromino.move("down", grid)
 
@@ -101,7 +97,7 @@ class Main():
          if not success:
             # get the tile matrix of the tetromino
             tiles_to_place = self.current_tetromino.tile_matrix
-
+            
             # update the game grid by adding the tiles of the tetromino
             game_over = grid.update_grid(tiles_to_place)
             # end the main game loop if the game is over
@@ -113,7 +109,6 @@ class Main():
 
             # Determines the current tetromino and gives it to GameGrid
             self.current_tetromino = self.tetrominos[self.round_count]
-            # print("len", len(self.tetrominos))
             grid.current_tetromino = self.current_tetromino
             
             new_x, new_y = random.randint(2, 9), 21
@@ -137,17 +132,16 @@ class Main():
             next_tetromino = self.tetrominos[self.round_count+1]
             grid.next_tetromino = next_tetromino
             self.next_tetromino_copy = self.tetrominos_copy[self.round_count + 1]
-            # print("next shape", grid.next_tetromino.shape)
-            # grid.next_tetromino.move_pos(15, 15)
             self.next_tetromino_copy.move_pos(15, 10)
             
-            
-            
-         # display the game grid and as well the current tetromino      
       
-         grid.display()
+         grid.display(grid.last_updated)
 
       print("Game over")
+
+
+   
+
 
    # Function for creating random shaped tetrominoes to enter the game grid
    def create_tetromino(self, grid_height, grid_width):
