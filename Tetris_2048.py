@@ -24,43 +24,45 @@ def draw_canvas():
    stddraw.setXscale(-0.5, grid_w + 4.5)
    stddraw.setYscale(-0.5, grid_h - 0.5)
 
-   global paussed, game_over, restart
-   paussed = False
+
+   global  paused, game_over, restart
+
+   paused = False
    game_over = False
    restart = False
 
    # display a simple menu before opening the game
-   display_game_menu(grid_h, main_w,paussed, game_over, restart)
-   start(grid_h, grid_w, main_w, paussed, game_over, restart)   
+   display_game_menu(grid_h, main_w,paused, game_over, restart)
+   start(grid_h, grid_w, main_w, paused, game_over, restart)   
 
-def start(grid_h, grid_w, main_w,paussed, game_over, restart ):
-
+def start(grid_h, grid_w, main_w, paused, game_over, restart ):
    
-   global tetro_list
-   tetro_list = []
-   tetro_count = 0
-   
+ 
+   global grid
    grid = GameGrid(grid_h, grid_w)
 
+   change_speed(grid_h, main_w) 
+
    current_tetromino = create_tetromino(grid_h, grid_w)
-   next_tetromino = current_tetromino
+   grid.next_tetromino = create_tetromino(grid_h, grid_w)
 
    # create the game grid
-   
    grid.current_tetromino = current_tetromino
 
- 
+
+   # the main game loop (keyboard interaction for moving the tetromino) 
    while True:
- 
+     
       # check user interactions via the keyboard
+      
       if stddraw.hasNextKeyTyped():  # check if the user has pressed a key
          key_typed = stddraw.nextKeyTyped()  # the most recently pressed key
 
          if key_typed == "p":
       
-            paussed = not paussed
+            paused = not paused
                
-         elif paussed is False:
+         elif paused is False:
          # if the left arrow key has been pressed
             if key_typed == "left":
                # move the active tetromino left by one
@@ -76,25 +78,22 @@ def start(grid_h, grid_w, main_w,paussed, game_over, restart ):
                current_tetromino.move(key_typed, grid)
             # clear the queue of the pressed keys for a smoother interaction
             elif key_typed == "up":
-               current_tetromino.rotation(grid, current_tetromino)
+               current_tetromino.rotate(current_tetromino)
 
-            elif key_typed == "space": # Piece Drop
+            elif key_typed == "space":# # Piece Drop
                for i in range(grid_h):
                   current_tetromino.move("down",grid)
 
-            #elif key_typed == "p":
-                  #grid.paussed = True
-                  #display_game_menu(grid_h, main_w, grid)
+                  
             elif key_typed=='r':
-               start(grid_h, grid_w, main_w,paussed, game_over, restart)
-               #grid.restart = True
-               #display_game_menu(grid_h, main_w, grid)
+               start(grid_h, grid_w, main_w,paused, game_over, restart)
+               
 
 
          stddraw.clearKeysTyped()
 
       # move the active tetromino down by one at each iteration (auto fall)
-      if paussed is False:
+      if paused is False:
          success = current_tetromino.move("down", grid)
 
       # place the active tetromino on the grid when it cannot go down anymore
@@ -106,32 +105,36 @@ def start(grid_h, grid_w, main_w,paussed, game_over, restart ):
          game_over = grid.update_grid(tiles, pos)
          # end the main game loop if the game is over
          if game_over:
-            break
+            gameOver(grid_h, main_w)
+            start(grid_h, grid_w, main_w,paused, game_over, restart)
+
 
          # create the next tetromino to enter the game grid
          # by using the create_tetromino function defined below
          # current_tetromino = create_tetromino(grid_h, grid_w)
-         current_tetromino = next_tetromino
+         index_arr, i = grid.checkFullRows(grid_h)
+         grid.deleteRow_and_moveRowDown(grid_h, grid_w, index_arr, i)
+
+         current_tetromino = grid.next_tetromino
          grid.current_tetromino = current_tetromino
          next_tetromino = create_tetromino(grid_h,grid_w)
          grid.next_tetromino = next_tetromino
-         # next_tetromino.draw_next_tetromino() 
-      
+         next_tetromino.draw_next_tetromino()
+
       if restart == True:
-         start(grid_h, grid_w, main_w,paussed, game_over, restart)
-       
+         start(grid_h, grid_w, main_w,paused, game_over, restart)
+
 
    
       # display the game grid and the current tetromino
-      grid.merge()
-      grid.delete_tile()
-      grid.display(paussed)
 
-   # print a message on the console when the game is over
-   print("Game over")# GAME OVERDEN SONRA START METHODUNU CAGIR AMA RESTART FALSE OLSUN
+      grid.merge(grid_h, grid_w)
+      grid.delete_tile(grid_h, grid_w)
+      grid.display(paused)
+
+   print("Game over")
    restart = False
-   grid.game_over = True
-   display_game_menu(grid_h, main_w, paussed, game_over, restart)
+ 
 
 # Function for creating random shaped tetrominoes to enter the game grid
 def create_tetromino(grid_height, grid_width):
@@ -145,9 +148,8 @@ def create_tetromino(grid_height, grid_width):
    return tetromino
 
 # Function for displaying a simple menu before starting the game
-def display_game_menu(grid_height, grid_width,paussed, game_over, restart):
+def display_game_menu(grid_height, grid_width,paused, game_over, restart):
    # colors used for the menu
-   grid = GameGrid(grid_height, grid_width)
    background_color = Color(42, 69, 99)
    button_color = Color(25, 255, 228)
    text_color = Color(31, 160, 239)
@@ -169,27 +171,18 @@ def display_game_menu(grid_height, grid_width,paussed, game_over, restart):
    button_blc_x, button_blc_y = img_center_x - button_w / 2, 4
    # display the start game button as a filled rectangle
    stddraw.setPenColor(button_color)
-   stddraw.filledRectangle(button_blc_x, button_blc_y, button_w, button_h)
+   stddraw.filledRectangle(button_blc_x, button_blc_y, button_w - 1, button_h)
    # display the text on the start game button
    stddraw.setFontFamily("Arial")
    stddraw.setFontSize(25)
    stddraw.setPenColor(text_color)
 
-   #  text_to_display = "Click Here to Start the Game"
-   # stddraw.text(img_center_x, 5, text_to_display)
-   # menu interaction loop
 
-   if paussed == True:
-      pauss(button_color,img_center_x,button_w, button_blc_x, button_blc_y, button_h, text_color, grid_width, grid_height, grid)
-
-   elif grid.game_over == True:
-      gameOver(grid_height, grid_width, background_color, button_color, text_color, img_file, grid)
       
       
-   else:
-        text_to_display = "Click Here to Start the Game"
-        stddraw.text(img_center_x, 5, text_to_display)
-        while True:
+   text_to_display = "Click Here to Start the Game"
+   stddraw.text(img_center_x, 5, text_to_display)
+   while True:
            stddraw.show(50)
            if stddraw.mousePressed():
             # get the x and y coordinates of the location at which the mouse has 
@@ -201,24 +194,27 @@ def display_game_menu(grid_height, grid_width,paussed, game_over, restart):
                   if mouse_y >= button_blc_y and mouse_y <= button_blc_y + button_h: 
                      break # break the loop to end the method and start the game
                   
-        change_speed(background_color, button_color, text_color, img_file, grid, grid_height, grid_width)
 
 
-def gameOver(grid_height, grid_width, background_color, button_color, text_color, img_file, grid, paussed, game_over):
+def gameOver(grid_height, grid_width):
 
-   stddraw.clear(background_color)
+
+   stddraw.clear(Color(42, 69, 99))
+   current_dir = os.path.dirname(os.path.realpath(__file__))
+   # path of the image file
+   img_file = current_dir + "/images/menu_image.png"
    img_center_x, img_center_y = (grid_width - 1) / 2, grid_height - 7
    image_to_display = Picture(img_file)
    stddraw.picture(image_to_display, img_center_x, img_center_y)
    button_w, button_h = grid_width - 1.5, 2
    button_blc_x, button_blc_y = img_center_x - button_w / 2, 4
 
-   stddraw.setPenColor(button_color)
+   stddraw.setPenColor(Color(25, 255, 228))
    stddraw.filledRectangle(button_blc_x, button_blc_y, button_w, button_h)
 
    stddraw.setFontFamily("Arial")
    stddraw.setFontSize(30)
-   stddraw.setPenColor(text_color)
+   stddraw.setPenColor(Color(31, 160, 239))
    stddraw.text(img_center_x, 9, "Game Over")
    
    stddraw.setFontSize(25)
@@ -231,63 +227,17 @@ def gameOver(grid_height, grid_width, background_color, button_color, text_color
          mouse_x, mouse_y = stddraw.mouseX(), stddraw.mouseY()
          if mouse_x >= button_blc_x and mouse_x <= button_blc_x + button_w:
             if mouse_y >= button_blc_y and mouse_y <= button_blc_y + button_h:
-               paussed = False
                grid.game_over = False
-               #grid.score = 0
-               #display_game_menu(grid_height, grid_width, grid)
                break
 
-             
-
-
-def pauss(button_color,img_center_x,button_w, button_blc_x, button_blc_y, button_h, text_color, grid_width, grid_height, grid, paussed, game_over):
-   
-   button_w, button_h = grid_width - 13.5, 2
-   button_blc_x, button_blc_y = img_center_x - button_w / 2, 4
-   stddraw.setPenColor(button_color)
-   #button2_blc_x, button2_blc_y = img_center_x - button_w / 2, 1
-   #stddraw.filledRectangle(button_blc_x, button_blc_y - 3, button_w, button_h)
-
-   stddraw.setFontFamily("Arial")
-   stddraw.setFontSize(25)
-   stddraw.setPenColor(text_color)
-
-   stddraw.text(img_center_x, 5, "Game is Paussed")
-   #stddraw.text(img_center_x, 2, "Continue")
-
             
-
-def restart_game(button_color,img_center_x,button_w, button_blc_x, button_blc_y, button_h, text_color, grid_width, grid_height, grid, paussed, game_over, restart):
+def change_speed(grid_height, grid_width):
    
-   button_w, button_h = grid_width - 13.5, 2
-   button_blc_x, button_blc_y = img_center_x - button_w / 2, 4
-   stddraw.setPenColor(button_color)
-
-   stddraw.setFontFamily("Arial")
-   stddraw.setFontSize(25)
-   stddraw.setPenColor(text_color)
-
-   stddraw.text(img_center_x, 5, "Restart")
-   #stddraw.text(img_center_x, 2, "Continue")
-   while True:
-       stddraw.show(50)
-       if stddraw.mousePressed():
-          mouse_x, mouse_y = stddraw.mouseX(), stddraw.mouseY()
-          if mouse_x >= button_blc_x and mouse_x <= button_blc_x + button_w:
-             if mouse_y >= button_blc_y and mouse_y <= button_blc_y + button_h:
-                 paused = False
-                 grid.score = 0
-                 grid.game_over = False
-                 restart = False
-                 display_game_menu(grid_height, grid_width, grid)
-                 break
-          
-
-
-
-def change_speed(background_color, button_color, text_color, img_file, grid, grid_height, grid_width):
-
-        stddraw.clear(background_color)
+   
+        stddraw.clear(Color(42, 69, 99))
+        current_dir = os.path.dirname(os.path.realpath(__file__))
+        # path of the image file
+        img_file = current_dir + "/images/menu_image.png"
         # center coordinates to display the image
         img_center_x, img_center_y = (grid_width - 1) / 2, grid_height - 7
         # image is represented using the Picture class
@@ -296,7 +246,7 @@ def change_speed(background_color, button_color, text_color, img_file, grid, gri
         stddraw.picture(image_to_display, img_center_x, img_center_y)
         # dimensions of the start game button
         button_w, button_h = grid_width - 13.5, 2
-        stddraw.setPenColor(button_color)
+        stddraw.setPenColor(Color(25, 255, 228))
         # coordinates of the bottom left corner of the start game button
         button1_blc_x, button1_blc_y = img_center_x - button_w / 2, 4
         button2_blc_x, button2_blc_y = button1_blc_x - 5, 4
@@ -305,11 +255,11 @@ def change_speed(background_color, button_color, text_color, img_file, grid, gri
         stddraw.filledRectangle(button1_blc_x, button1_blc_y, button_w, button_h)
         stddraw.filledRectangle(button2_blc_x, button2_blc_y, button_w, button_h)
         stddraw.filledRectangle(button3_blc_x, button3_blc_y, button_w, button_h)
-        stddraw.setPenColor(button_color)
+        stddraw.setPenColor(Color(25, 255, 228))
         
         stddraw.setFontFamily("Arial")
         stddraw.setFontSize(25)
-        stddraw.setPenColor(text_color)
+        stddraw.setPenColor(Color(31, 160, 239))
 
         stddraw.text(img_center_x - 5, 5, "I'm too young to die")
         stddraw.text(img_center_x, 5, "Hurt me plenty")
@@ -343,5 +293,4 @@ def change_speed(background_color, button_color, text_color, img_file, grid, gri
 # the program starts execution
 if __name__== '__main__':
    draw_canvas()
-   #start()
-   start(grid_h, grid_w, main_w, paussed, game_over, restart)
+   start(grid_h, grid_w, main_w, paused, game_over, restart)

@@ -31,7 +31,6 @@ class GameGrid:
 
       self.paussed = False
       self.score = 0
-      self.game_over = False
       self.restart = False
 
    # Method used for displaying the game grid
@@ -46,71 +45,83 @@ class GameGrid:
       # game grid is updated)
       if self.current_tetromino is not None:
          self.current_tetromino.draw()
-         #self.next_tetromino.draw()
 
       # draw a box around the game grid 
       self.draw_boundaries()
+      self.next_tetromino.draw_next_tetromino()
       # show the resulting drawing with a pause duration = 250 ms
       # stddraw.show(250)
       stddraw.show(self.normal_speed)  
 
 
-   def merge(self):
+
+   def merge(self,grid_h, grid_w):
         
-        a , b = 0, 0
-        while(a < self.grid_height):
-            while(b < self.grid_width):
+        i , j = 0, 0
+        while(i < grid_h):
+            while(j < grid_w):
 
-                if self.tile_matrix[a][b] != None and self.tile_matrix[a + 1][b] != None:
-                    if self.tile_matrix[a][b].tile_number == self.tile_matrix[a + 1][b].tile_number:
+                if self.tile_matrix[i][j] != None and self.tile_matrix[i + 1][j] != None:
+                    if self.tile_matrix[i][j].tile_number == self.tile_matrix[i + 1][j].tile_number:
 
-                        # self.tile_matrix[a + 1][b].set_position(None)
-                        self.tile_matrix[a + 1][b] = None
-                        self.tile_matrix[a][b].tile_number += self.tile_matrix[a][b].tile_number
-                        self.score += self.tile_matrix[a][b].tile_number
-                        # self.last_updated += grid.tile_matrix[a][b].tile_number
-                        self.tile_matrix[a][b].decide_color(self.tile_matrix[a][b].tile_number)
-                        a = 0
-                        b = 0
-                b += 1
-            a += 1
-            b = 0
+                        self.tile_matrix[i + 1][j] = None
+                        self.tile_matrix[i][j].tile_number += self.tile_matrix[i][j].tile_number
+                        self.score += self.tile_matrix[i][j].tile_number
+                        self.tile_matrix[i][j].decide_color(self.tile_matrix[i][j].tile_number)
+                        i = 0
+                        j = 0
+                j += 1
+            i += 1
+            j = 0
+
+    
+
+   def checkFullRows(self, grid_h):
+
+      index_arr = []
+
+      for i in range(grid_h):
+         if self.checkEmptyOrNot(i):
+            index_arr.append(i)
+            for j in range(self.grid_width):
+               self.score += self.tile_matrix[i][j].tile_number
+
+      return index_arr, i
+      
+      
+   def checkEmptyOrNot(self, i):
+      if None not in self.tile_matrix[i]:
+         return True
+      else:
+         return False
 
 
-
-   # Delete full line
-   def clearFullLine(self, grid_h, grid_w):
-
-      for i in range(grid_w):
-            for j in range(grid_w):
-               if self.tile_matrix[i][j] is not None:  # To avoid AttributeError: 'NoneType' object has no attribute 'tile_number'
-                  row_score = self.tile_matrix[i][j].tile_number
-                  self.score += row_score
-
-            self.tile_matrix = np.delete(self.tile_matrix, i , axis=0)
+   def deleteRow_and_moveRowDown(self, grid_h, grid_w, index_arr, index):
+       
+       for i in index_arr:
+            self.tile_matrix = np.delete(self.tile_matrix, i, axis=0)
             self.tile_matrix = np.append(self.tile_matrix, np.full((1, grid_w), None), axis=0)
+            
+            for j in range(i, grid_h):
+               for k in range(grid_w):
+                  if self.tile_matrix[j][k] != None:
+                     self.tile_matrix[j][k].move(0, -1)
 
-            for k in range(i, grid_h):
-               for l in range(grid_w):
-                  if self.tile_matrix[k][l] is not None:
-                     self.tile_matrix[k][l].move(0, -1)
 
+   def delete_tile(self, grid_h, grid_w):
 
-   def delete_tile(self):
-
-      for i in range(1, self.grid_height - 1):
-         for j in range(1, self.grid_width - 1):
+      for i in range(1, grid_h - 1):
+         for j in range(1, grid_w - 1):
             if self.tile_matrix[i][j] is not None:
 
-               if self.tile_matrix[i + 1][j] is None and self.tile_matrix[i - 1][j] is None and self.tile_matrix[i][j + 1] is None and self.tile_matrix[i][j - 1] is None:
-                  
-                  tile_score = self.tile_matrix[i][j].tile_number
-                  self.score += tile_score
+               if self.tile_matrix[i + 1][j] == None and self.tile_matrix[i][j + 1] == None and self.tile_matrix[i - 1][j] == None and self.tile_matrix[i][j - 1] == None:
+                
+                  self.score += self.tile_matrix[i][j].tile_number
                   self.tile_matrix[i][j] = None
-                  self.delete_tile()
+                  self.delete_tile(grid_h, grid_w)
 
+    
 
-      
    # Method for drawing the cells and the lines of the game grid
    def draw_grid(self, paussed):
       # for each cell of the game grid
@@ -127,7 +138,7 @@ class GameGrid:
       # self.showScore(self.score)
 
       # Displays total number of count how many times the speed increased
-      self.showNextTetrominoAndScore(self.score, self.normal_speed, paussed)
+      self.showInformations(self.score, self.normal_speed, paussed)
 
       # draw the inner lines of the grid
       stddraw.setPenColor(self.line_color)
@@ -144,9 +155,8 @@ class GameGrid:
    def set_next(self, next_tetromino):
         self.next_tetromino = next_tetromino
 
-   def showNextTetrominoAndScore(self, score, speed, paussed):
+   def showInformations(self, score, speed, paussed):
 
-        #stddraw.setPenRadius(200)
         stddraw.setFontSize(18)
         stddraw.setPenColor(Color(255, 255, 255))
 
@@ -167,7 +177,7 @@ class GameGrid:
 
         if paussed is True:
            stddraw.setFontSize(30)
-           stddraw.text(6, 18, "Paussed")
+           stddraw.text(6, 15, "Game is Paused")
 
 
       
@@ -224,7 +234,6 @@ class GameGrid:
                else:
                   self.game_over = True
 
-      # return the game_over flag
-      self.clearFullLine(self.grid_height, self.grid_width)
+   
       return self.game_over
 
