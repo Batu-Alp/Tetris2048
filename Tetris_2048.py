@@ -5,6 +5,7 @@ import os  # the os module is used for file and directory operations
 from game_grid import GameGrid # the class for modeling the game grid
 from tetromino import Tetromino # the class for modeling the tetrominoes
 import random # used for creating tetrominoes with random types/shapes
+import pygame
 
 # MAIN FUNCTION OF THE PROGRAM
 #-------------------------------------------------------------------------------
@@ -128,12 +129,13 @@ def start(grid_h, grid_w, main_w, paused, game_over, restart ):
    
       # display the game grid and the current tetromino
 
-      grid.merge(grid_h, grid_w)
+      #grid.merge(grid_h, grid_w)
       grid.delete_tile(grid_h, grid_w)
       grid.display(paused)
 
    print("Game over")
    restart = False
+   game_over = True
  
 
 # Function for creating random shaped tetrominoes to enter the game grid
@@ -193,6 +195,8 @@ def display_game_menu(grid_height, grid_width,paused, game_over, restart):
                   # change_speed(background_color, button_color, text_color, img_file, grid, grid_height, grid_width)
                   if mouse_y >= button_blc_y and mouse_y <= button_blc_y + button_h: 
                      break # break the loop to end the method and start the game
+
+   play_sound()
                   
 
 
@@ -229,6 +233,16 @@ def gameOver(grid_height, grid_width):
             if mouse_y >= button_blc_y and mouse_y <= button_blc_y + button_h:
                grid.game_over = False
                break
+
+
+def play_sound():
+   current_dir = os.path.dirname(os.path.realpath(__file__))
+   music_file = current_dir + "/lib/tetris.mp3"
+   pygame.init()
+   music = pygame.mixer.music.load(os.path.join(music_file))
+   pygame.mixer.music.play()
+    
+
 
             
 def change_speed(grid_height, grid_width):

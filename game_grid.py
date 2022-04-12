@@ -49,6 +49,8 @@ class GameGrid:
       # draw a box around the game grid 
       self.draw_boundaries()
       self.next_tetromino.draw_next_tetromino()
+      self.merge(self.grid_height, self.grid_width)
+
       # show the resulting drawing with a pause duration = 250 ms
       # stddraw.show(250)
       stddraw.show(self.normal_speed)  
@@ -110,8 +112,8 @@ class GameGrid:
 
    def delete_tile(self, grid_h, grid_w):
 
-      for i in range(1, grid_h - 1):
-         for j in range(1, grid_w - 1):
+      for i in range(1,grid_h - 1):   #IndexError: index 12 is out of bounds for axis 0 with size 12
+         for j in range(1,grid_w - 1):
             if self.tile_matrix[i][j] is not None:
 
                if self.tile_matrix[i + 1][j] == None and self.tile_matrix[i][j + 1] == None and self.tile_matrix[i - 1][j] == None and self.tile_matrix[i][j - 1] == None:
